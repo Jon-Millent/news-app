@@ -71,7 +71,7 @@ class TablesHomeState extends State<TablesHome> {
                     ],
                   ),
                   width: 40.0,
-                  margin: EdgeInsets.only(left: 16.0, top: 8.0),
+                  margin: EdgeInsets.only(left: 12.0, top: 8.0),
                 ),
               ),
             ],
