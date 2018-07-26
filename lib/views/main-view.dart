@@ -12,25 +12,15 @@ class MainView extends StatefulWidget {
 }
 
 
-class MainViewState extends State<MainView> with SingleTickerProviderStateMixin {
+class MainViewState extends State<MainView> {
 
   TabController controller;
   int nowTabIndex = 0;
-
   int homePageMessageCount = 3;
 
   @override
   void initState(){
     super.initState();
-    this.controller = new TabController(length: 4, vsync: this);
-
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement deactivate
-    controller.dispose();
-    super.dispose();
   }
 
   Widget getTab(String tabName, IconData icon, int count){
@@ -100,41 +90,14 @@ class MainViewState extends State<MainView> with SingleTickerProviderStateMixin 
     // TODO: implement build
 
     return new Scaffold(
-      body: new TabBarView(
-        controller: this.controller,
+      body: new IndexedStack(
+        index: nowTabIndex,
         children: <Widget>[
           new TablesHome(),
           new TablesVideo(),
           new TablesTop(),
           new TablesMySelf()
         ],
-
-      ),
-      bottomNavigationBar: new Material(
-        color: Color.fromRGBO(244, 245, 246, 1.0),
-        child: new Container(
-          decoration: const BoxDecoration(
-            border: const Border(
-              top: const BorderSide(width: 1.0, color: const Color.fromRGBO(232, 232, 232, 1.0)),
-            ),
-          ),
-          child: new TabBar(
-            labelColor: Color.fromRGBO(248, 89, 89, 1.0),
-            unselectedLabelColor: Color.fromRGBO(80, 80, 80, 1.0),
-            labelStyle: new TextStyle(
-              fontSize: 10.0
-            ),
-            controller: this.controller,
-            tabs: [
-              getTab('首页', Icons.home, homePageMessageCount),
-              getTab('小视频', Icons.ondemand_video, 0),
-              getTab('微头条', Icons.chat_bubble, 0),
-              getTab('未登录', Icons.person, 0),
-            ],
-            indicatorColor: Color.fromRGBO(248, 89, 89, 1.0),
-            indicatorWeight: 0.1
-          ),
-        ),
       ),
     );
   }
