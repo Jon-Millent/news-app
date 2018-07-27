@@ -10,6 +10,8 @@ dependencies:
   cupertino_icons: ^0.1.2
   dio: ^0.1.7
   pull_to_refresh: ^1.1.5
+  flutter_webview_plugin: "^0.1.6"
+  video_player: ^0.6.4
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../../util/api.dart';
 import "package:pull_to_refresh/pull_to_refresh.dart";
 import 'dart:convert';
+import '../news/news-details.dart';
 
 // 主页
 
@@ -150,7 +151,6 @@ class TablesHomeState extends State<TablesHome> with SingleTickerProviderStateMi
   }
 }
 
-
 class NewsTab {
   String newsName;
   String newsType;
@@ -173,64 +173,64 @@ class NewsTabsController extends StatefulWidget {
   State createState() => new NewsTabsControllerState(newsType);
 }
 
-class NewsTabsControllerState extends State<NewsTabsController> with AutomaticKeepAliveClientMixin  {
+class NewsTabsControllerState extends State<NewsTabsController>  {
   String newsType;
   RefreshController _refreshController;
   Api $api = new Api();
-
-
-  List itemArray = [
-    1,2,3,4,5,6,7,8,9,2,2,2,22,2,2,
-    1,2,3,4,5,6,7,8,9,2,2,2,22,2,2,
-    1,2,3,4,5,6,7,8,9,2,2,2,22,2,2,
-    1,2,3,4,5,6,7,8,9,2,2,2,22,2,2,
-    1,2,3,4,5,6,7,8,9,2,2,2,22,2,2,
-  ];
+  bool _load = true;
+  List itemArray = [];
 
 
   NewsTabsControllerState(String newsType){
     this.newsType = newsType;
   }
 
-
-  @override
-  bool get wantKeepAlive => true;
-
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    print('initState');
-    this.getNewsData();
-
-
+    this.getNewsData(false);
     _refreshController = new RefreshController();
   }
 
-  @override
-  void didChangeDependencies() {
-    print('didChangeDependencies');
-    super.didChangeDependencies();
-  }
+  getNewsData(bool isRemove) async{
+    setState((){
+      _load = false;
+    });
+    try{
+      Response response = await this.$api.getNews(newsType);
+      var res = response.data['result'];
 
-  @override
-  void didUpdateWidget(oldWidget) {
-    print('didUpdateWidget');
-    super.didUpdateWidget(oldWidget);
-  }
+      if(res == null){
+        return;
+      }
+      var data = res['data'];
 
-  @override
-  void deactivate() {
-    print('deactivate');
-    super.deactivate();
-  }
+      print(data);
+
+      if(isRemove){
+        setState(() {
+          itemArray = [];
+        });
+      }
 
 
-  getNewsData() async{
-    Response response =  await this.$api.getNews(newsType);
-    print('asdasdsad');
-    print(response);
+      for(int i=0; i<data.length; i++){
+        setState(() {
+          itemArray.add(data[i]);
+        });
+      }
+
+      setState((){
+        _load = true;
+      });
+    }catch(err){
+      setState((){
+        _load = true;
+      });
+    }
+
+
   }
 
 
@@ -248,46 +248,136 @@ class NewsTabsControllerState extends State<NewsTabsController> with AutomaticKe
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
+
     return new SmartRefresher(
-        enablePullDown: true,
-        enablePullUp: true,
-        controller: _refreshController,
-        onRefresh: _onRefresh,
-        headerBuilder: _buildHeader,
-        footerBuilder: _buildFooter,
-        child: new ListView.builder(
-          itemCount: this.itemArray.length,
-          itemBuilder: (context, i) {
-            return renderNewsController(this.itemArray[i]);
-          },
-        )
+      enablePullDown: true,
+      enablePullUp: true,
+      controller: _refreshController,
+      onRefresh: _onRefresh,
+      headerBuilder: _buildHeader,
+      footerBuilder: _buildFooter,
+      child: new ListView.builder(
+        itemCount: this.itemArray.length,
+        itemBuilder: (context, i) {
+          return renderNewsController(this.itemArray[i]);
+        },
+      )
     );
   }
 
-  void _onRefresh(bool up){
+  void _onRefresh(bool up) async{
     if(up){
       debugPrint('up');
       //headerIndicator callback
-      new Future.delayed(const Duration(milliseconds: 2009))
-          .then((val) {
+      await getNewsData(true);
 
-        _refreshController.sendBack(up, RefreshStatus.completed);
-      });
+      _refreshController.sendBack(up, RefreshStatus.idle);
 
     }
     else{
       //footerIndicator Callback
-      debugPrint('else');
-      _refreshController.sendBack(up, RefreshStatus.completed);
+
+      await getNewsData(false);
+
+      _refreshController.sendBack(up, RefreshStatus.idle);
     }
   }
 
-  void _onOffsetCallback(bool isUp, double offset) {
-    // if you want change some widgets state ,you should rewrite the callback
+  Widget renderNewsController(newsInfo){
+
+    return new FlatButton(
+      padding: EdgeInsets.all(0.0),
+      onPressed: () {
+        Navigator.of(context).push(new MaterialPageRoute(
+            builder: (ctx) => new NewsDetailPage(id: newsInfo['url'])
+        ));
+      },
+      child: new Card(
+        child: Column(
+          children: <Widget>[
+            new Container(
+              child: new Text(
+                newsInfo['title'],
+                style: new TextStyle(
+                    fontSize: 20.0
+                ),
+              ),
+              padding: EdgeInsets.only(top: 30.0, left: 20.0, bottom: 10.0, right: 20.0),
+            ),
+            new Container(
+              child: BuildImageBox(newsInfo),
+              padding: EdgeInsets.only(left: 20.0, right: 20.0),
+            ),
+            new Container(
+              padding: EdgeInsets.only(top:10.0, right: 20.0, bottom: 30.0, left: 20.0),
+              child: new Row(
+                children: <Widget>[
+                  new Container(
+                    child: new Text(
+                      newsInfo["author_name"],
+                      style: new TextStyle(
+                        color: Color.fromRGBO(153, 153, 153, 1.0),
+                        fontSize: 14.0
+                      ),
+                    ),
+                    margin: EdgeInsets.only(right: 10.0),
+                  ),
+                  new Container(
+                    child: new Text(
+                      newsInfo["date"],
+                      style: new TextStyle(
+                          color: Color.fromRGBO(153, 153, 153, 1.0),
+                          fontSize: 14.0
+                      )
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
+        )
+      )
+    );
   }
 
-  Widget renderNewsController(newsInfo){
-    return new Text('sadasd');
+  Row BuildImageBox(newsInfo){
+    List<Widget> img = [];
+
+    if(newsInfo['thumbnail_pic_s'] != null){
+      img.add(
+        BuildOneImage(newsInfo['thumbnail_pic_s'])
+      );
+    }
+
+    if(newsInfo['thumbnail_pic_s02'] != null){
+      img.add(
+        BuildOneImage(newsInfo['thumbnail_pic_s02'])
+      );
+    }
+
+    if(newsInfo['thumbnail_pic_s03'] != null){
+      img.add(
+        BuildOneImage(newsInfo['thumbnail_pic_s03'])
+      );
+    }
+
+    return Row(
+      children: img,
+    );
+
+  }
+
+  Expanded BuildOneImage(String src){
+    return new Expanded(
+      flex: 1,
+      child: new Container(
+        child: new Image.network(
+          src,
+          fit: BoxFit.fitWidth,
+        ),
+        padding: EdgeInsets.all(1.0),
+      )
+    );
   }
 
 }
